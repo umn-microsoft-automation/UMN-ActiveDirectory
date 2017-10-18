@@ -393,6 +393,7 @@ function Get-OS
     .PARAMETER computername
         Name of computer object
 #>
+    [CmdletBinding()]
     param 
     (
         [Parameter(Mandatory)]
