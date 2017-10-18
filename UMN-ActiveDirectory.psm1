@@ -379,6 +379,28 @@ function Set-ADGroupManager {
 	}
 }
 
+function Get-OS
+{
+<#
+    .Synopsis
+        Short description
+    .DESCRIPTION
+        Long description
+    .EXAMPLE
+        Example of how to use this cmdlet
+    .EXAMPLE
+        Another example of how to use this cmdlet
+    .PARAMETER computername
+        Name of computer object
+#>
+    param 
+    (
+        [Parameter(Mandatory)]
+        [string]$computername
+    )
+    get-adcomputer $computername -Properties Operatingsystem|select -ExpandProperty  Operatingsystem
+}
+
 
 function Test-GPOWiFiServerName {
 	<#
