@@ -382,14 +382,13 @@ function Set-ADGroupManager {
 function Get-OS
 {
 <#
-    .Synopsis
-        Short description
+   .Synopsis
+        Return Operating system of given computer
     .DESCRIPTION
-        Long description
+        Queries AD and returns the Operatingsystem attribute for given computer. 
     .EXAMPLE
-        Example of how to use this cmdlet
-    .EXAMPLE
-        Another example of how to use this cmdlet
+        get-os wamcitrix
+   
     .PARAMETER computername
         Name of computer object
 #>
