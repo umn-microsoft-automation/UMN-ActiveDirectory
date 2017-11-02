@@ -456,3 +456,480 @@ function Test-GPOWiFiServerName {
 		return $ReturnObject
 	}
 }
+
+
+Function Get-ParentDistinguishedName {
+    <#
+		.SYNOPSIS
+		Cmdlet that returns the parent of a distinguished name.
+		
+		.DESCRIPTION
+		A cmdlet that takes in a string which should be a valid distinguished name. It then returns a string that is the
+        distinguished name for the parent object of the object passed in.
+		
+		.PARAMETER DistinguishedName
+		A string that is a valid distinguished name.
+		
+		.EXAMPLE
+		Get-ParentDistinguishedName -DistinguishedName "CN=Foo,OU=Bar,DC=domain,DC=acme,DC=com"
+		
+		.NOTES
+		Name: Get-ParentDistinguishedName
+		Author: Craig Woodford
+		LASTEDIT: 6/14/2016, 12:48 PM
+
+        Based on: https://www.uvm.edu/~gcd/2012/07/listing-parent-of-ad-object-in-powershell/
+	#>
+    
+    [CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$false, HelpMessage="Enter in a valid Distinguished Name")][string]$DistinguishedName
+	)
+    
+    process {
+        # Split the string on commas that are not preceeded by a slash
+        $parts = $DistinguishedName -split '(?<![\\]),'
+        # Returns the rejoined string minus the first element
+        $parts[1..$($parts.Count-1)] -join ','
+    }
+}
+
+
+Function Get-GPOsForOU {
+    <#
+		.SYNOPSIS
+		Cmdlet that returns all GPOs applied to a specific OU.
+		
+		.DESCRIPTION
+		A cmdlet that takes in a string which should be a valid distinguished name for an AD OU. It then returns an array
+        containing any group policy objects (.Net class: Microsoft.GroupPolicy.Gpo) that are applied to that OU.
+		
+		.PARAMETER DistinguishedName
+		A string that is a valid distinguished name for an OU in AD.
+
+        .PARAMETER Server
+		A domain controller which can be used to see if the item exists on a specific domain controller.
+		
+		.EXAMPLE
+		Get-GPOsForOU -DistinguishedName "OU=Foo,OU=Bar,DC=domain,DC=acme,DC=com" -Server dc1.domain.acme.com
+		
+		.NOTES
+		Name: Get-GPOsForOU
+		Author: Craig Woodford
+	#>
+
+    [CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$true, HelpMessage="Enter in a valid OU distinguished name.")][string]$ouDistinguishedName,
+		[Parameter(Mandatory=$false, HelpMessage="Enter in a valid domain controller.")][string]$Server=(Get-ADDomainController).HostName
+	)
+    
+    process {
+        $LinkedGPOs = @()
+        
+        try {
+
+            # Get-GPInheritance doesn't return objects of the same type as Get-GPO so we want to process the results of the InheritedGpoLinks field.
+            $GPLinkList = (Get-GPInheritance -Target $ouDistinguishedName -Server $Server).InheritedGpoLinks
+
+            foreach ($gpLink in $GPLinkList) {
+                if ($gpLink.DisplayName) {
+                    $LinkedGPOs += Get-GPO -Name $gpLink.DisplayName -Server $Server
+                }
+            }
+
+            $LinkedGPOs
+        }
+        catch {
+            $PSCmdlet.ThrowTerminatingError($PSItem)
+        }
+    }
+}
+
+
+Function Get-GPOsForComputer {
+    <#
+	    .SYNOPSIS
+		Cmdlet that returns all GPOs applied to a computer object.
+		
+		.DESCRIPTION
+		A cmdlet that takes in a string which should be a valid computer name. It then returns an array
+        containing any group policy objects (.Net class: Microsoft.GroupPolicy.Gpo) that are applied to that computer.
+		
+		.PARAMETER ComputerName
+		A string that is a valid name for a computer object in AD.
+
+        .PARAMETER Server
+		A domain controller which can be used to see if the item exists on a specific domain controller.
+		
+		.EXAMPLE
+		Get-GPOsForComputer -ComputerName "Computer1" -Server dc1.domain.acme.com
+		
+		.NOTES
+		Name: Get-GPOsForComputer
+		Author: Craig Woodford
+	#>
+
+    [CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$true, HelpMessage="Enter in a valid computer object identity")][string]$ComputerName,
+		[Parameter(Mandatory=$false, HelpMessage="Enter in a valid domain controller.")][string]$Server=(Get-ADDomainController).HostName
+	)
+    
+    process {
+
+        try {
+        
+            $computerDistinguishedName = (Get-ADComputer -Identity $ComputerName).DistinguishedName
+        
+            $parentDistinguishedName = Get-ParentDistinguishedName -DistinguishedName $computerDistinguishedName
+            
+            $LinkedGPOs = Get-GPOsForOU -ouDistinguishedName $parentDistinguishedName -Server $Server
+
+            $LinkedGPOs
+        }
+        catch {
+            $PSCmdlet.ThrowTerminatingError($PSItem)
+        }
+    }
+}
+
+
+Function Get-MappedDrivesForComputer {
+    <#
+	    .SYNOPSIS
+		Cmdlet that returns all drives mapped by group policy preferences for a computer.
+		
+		.DESCRIPTION
+		A cmdlet that takes in a string which should be a valid computer name. It then returns an array
+        containing information about any drives mapped via group policy preferences.
+		
+		.PARAMETER ComputerName
+		A string that is a valid name for a computer object in AD.
+
+        .PARAMETER Server
+		A domain controller which can be used to see if the item exists on a specific domain controller.
+		
+		.EXAMPLE
+		Get-MappedDrivesForComputer -ComputerName "Computer1" -Server dc1.domain.acme.com
+		
+		.NOTES
+		Name: Get-MappedDrivesForComputer
+		Author: Craig Woodford
+	#>
+
+    [CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$true, HelpMessage="Enter in a valid computer object identity")][string]$ComputerName,
+		[Parameter(Mandatory=$false, HelpMessage="Enter in a valid domain controller.")][string]$Server=(Get-ADDomainController).HostName
+	)
+    
+    process {
+        $driveMaps = @()
+
+        $LinkedGPOs = Get-GPOsForComputer -ComputerName $ComputerName -Server $Server
+
+        if ($LinkedGPOs) {
+            foreach ($policy in $LinkedGPOs) {
+                $GPOID = $Policy.Id
+                $GPODom = $Policy.DomainName
+                $GPODisp = $Policy.DisplayName
+ 
+                # Test each group policy path in SYSVOL to ensure its there then get the content as XML.
+                if (Test-Path "\\$($GPODom)\SYSVOL\$($GPODom)\Policies\{$($GPOID)}\User\Preferences\Drives\Drives.xml") {
+                    [xml]$DriveXML = Get-Content "\\$($GPODom)\SYSVOL\$($GPODom)\Policies\{$($GPOID)}\User\Preferences\Drives\Drives.xml"
+ 
+                    # Walk through each mapped drive in the group policy and build an object with information about the mapping.
+                    foreach ( $drivemap in $DriveXML.Drives.Drive ) {
+                        $driveMaps += New-Object PSObject -Property @{
+                            GPOName = $GPODisp
+                            DriveLetter = $drivemap.Properties.Letter + ":"
+                            DrivePath = $drivemap.Properties.Path
+                            DriveAction = $drivemap.Properties.action.Replace("U","Update").Replace("C","Create").Replace("D","Delete").Replace("R","Replace")
+                            DriveLabel = $drivemap.Properties.label
+                            DrivePersistent = $drivemap.Properties.persistent.Replace("0","False").Replace("1","True")
+                            DriveFilterGroup = $drivemap.Filters.FilterGroup.Name
+                        }
+                    }
+                }
+            }
+        }
+
+        $driveMaps
+    }
+}
+
+Function Confirm-ADObjectIsInGroup {
+    <#
+	    .SYNOPSIS
+		Cmdlet that confirms if an AD object is a member of an AD group.
+		
+		.DESCRIPTION
+		A cmdlet that takes in a string which should be a valid AD object and another string which should be a
+        valid AD group. It then returns true if the object is a member of the group and false if not or if
+        either object does not exist.
+
+		.PARAMETER ObjectName
+		A string that is a valid name for an object in AD.
+
+        .PARAMETER GroupName
+		A string that is a valid name for a group object in AD.
+
+        .PARAMETER Server
+		A domain controller which can be used to see if the item exists on a specific domain controller.
+		
+		.EXAMPLE
+		Confirm-ADObjectIsInGroup -ObjectName "user1" -GroupName "group2" -Server dc1.domain.acme.com
+		
+		.NOTES
+		Name: Confirm-ADObjectIsInGroup
+		Author: Craig Woodford
+	#>
+
+    [CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$true, HelpMessage="Enter in a valid user object identity")][string]$ObjectName,
+		[Parameter(Mandatory=$true, HelpMessage="Enter in a valid group object identity")][string]$GroupName,
+		[Parameter(Mandatory=$false, HelpMessage="Enter in a valid domain controller.")][string]$Server=(Get-ADDomainController).HostName
+	)
+
+    process {
+        
+        try {
+        
+            # Test if the objects exist before we do anything else.
+            if ((Confirm-ADObjectExists -Identity $ObjectName -Type Unknown -Server $Server) -and (
+                Confirm-ADObjectExists -Identity $GroupName -Type Group -Server $Server)) {
+            
+                # Get object so we can access it's distinguished name.
+                $targetObject = Get-ADObject -Filter {(
+				    DistinguishedName -eq $ObjectName) -or (
+				    ObjectGUID -eq $ObjectName) -or (
+				    objectSID -eq $ObjectName) -or (
+				    SamAccountName -eq $ObjectName)
+			    } -Server $Server
+            
+                $targetGroup =  Get-ADGroup -Identity $GroupName -Server $Server
+
+                # This query will return null if the object is not a member of the group.
+                $searchResult = Get-ADObject -Filter { memberOf -RecursiveMatch $targetGroup.DistinguishedName } -SearchBase $targetObject.DistinguishedName -SearchScope Base
+            }
+            else {
+                $searchResult = $null
+            }
+
+            if ($searchResult) {
+                return $true
+            }
+            else {
+                return $false
+            }
+        }
+        catch {
+            # If we encounter an error we want to return false.
+            Write-Verbose -Message "Other error $($_.Exception.Message)"
+		    Write-Error -Exception $_.Exception -Message $_.Exception.Message -TargetObject $_.Exception.ItemName
+		    return $false
+        }
+    }
+}
+
+
+
+Function Get-GPOLink {
+    <#
+        .SYNOPSIS
+            Returns the Active Directory (AD) Organization Units (OU's) that a Group Policy Object (GPO) is linked to.
+
+        .DESCRIPTION
+            Get-GPOLink is a function that returns the Active Directory Organization Units (OU's) that a Group Policy
+            Object (GPO) is linked to.
+
+        .PARAMETER Name
+            The Name of the Group Policy Object.
+
+        .EXAMPLE
+            Get-GPOLink -Name 'Default Domain Policy'
+
+        .EXAMPLE
+            Get-GPOLink -Name 'Default Domain Policy', 'Default Domain Controllers Policy'
+
+        .EXAMPLE
+            'Default Domain Policy' | Get-GPOLink
+
+        .EXAMPLE
+            'Default Domain Policy', 'Default Domain Controllers Policy' | Get-GPOLink
+
+        .EXAMPLE
+            Get-GPO -All | Get-GPO-Link
+
+        .INPUTS
+            System.String, Microsoft.GroupPolicy.Gpo
+
+        .OUTPUTS
+            PSCustomObject
+
+        .NOTES
+            Taken from Mike Robbins and slightly modified. See this page:
+            http://mikefrobbins.com/2013/11/14/determine-what-active-directory-organization-units-a-group-policy-is-linked-to-with-powershell/
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory,
+                   ValueFromPipeline,
+                   ValueFromPipelineByPropertyName)]
+        [Alias('DisplayName')]
+        [string[]]$Name
+    )
+    
+    process {
+        foreach ($n in $Name) {
+            $problem = $false
+            try {
+                Write-Verbose -Message "Attempting to produce XML report for GPO: $n"
+                [xml]$report = Get-GPOReport -Name $n -ReportType Xml -ErrorAction Stop
+            }
+            catch {
+                $problem = $true
+                Write-Warning -Message "An error occured while attempting to query GPO: $n"
+            }
+            if (-not($problem)) {
+                Write-Verbose -Message "Returning results for GPO: $n"
+                [PSCustomObject]@{
+                    'GPOName' = $report.GPO.Name
+                    'LinksTo' = $report.GPO.LinksTo.SOMPath
+                    'Enabled' = $report.GPO.LinksTo.Enabled
+                    'NoOverride' = $report.GPO.LinksTo.NoOverride
+                    'CreatedDate' = ([datetime]$report.GPO.CreatedTime).ToShortDateString()
+                    'ModifiedDate' = ([datetime]$report.GPO.ModifiedTime).ToShortDateString()
+                }
+            }
+        }
+    }
+}
+
+Function Get-MappedPrintersForComputer {
+    <#
+	    .SYNOPSIS
+		Cmdlet that returns all printers mapped by group policy preferences for a computer.
+		
+		.DESCRIPTION
+		A cmdlet that takes in a string which should be a valid computer name. It then returns an array
+        containing information about any printers mapped via group policy preferences.
+		
+		.PARAMETER ComputerName
+		A string that is a valid name for a computer object in AD.
+
+        .PARAMETER Server
+		A domain controller which can be used to see if the item exists on a specific domain controller.
+		
+		.EXAMPLE
+		Get-MappedPrintersForComputer -ComputerName "Computer1" -Server dc1.domain.acme.com
+		
+		.NOTES
+		Name: Get-MappedPrintersForComputer
+		Author: Craig Woodford
+	#>
+
+    [CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$true, HelpMessage="Enter in a valid computer object identity")][string]$ComputerName,
+		[Parameter(Mandatory=$false, HelpMessage="Enter in a valid domain controller.")][string]$Server=(Get-ADDomainController).HostName
+	)
+    
+    process {
+        $printerMaps = @()
+
+        $LinkedGPOs = Get-GPOsForComputer -ComputerName $ComputerName -Server $Server
+
+        if ($LinkedGPOs) {
+            foreach ($policy in $LinkedGPOs) {
+                $GPOID = $Policy.Id
+                $GPODom = $Policy.DomainName
+                $GPODisp = $Policy.DisplayName
+                $PrefPath = "\\$($GPODom)\SYSVOL\$($GPODom)\Policies\{$($GPOID)}\User\Preferences"
+ 
+                #Get GP Preferences Printers
+                $XMLPath = "$PrefPath\Printers\Printers.xml"
+                if (Test-Path "$XMLPath") {
+                [xml]$PrintXML = Get-Content "$XMLPath"
+ 
+                    foreach ( $Printer in $PrintXML.Printers.SharedPrinter ) {
+ 
+                        $printerMaps += New-Object PSObject -Property @{
+                            GPOName = $GPODisp
+                            PrinterPath = $printer.Properties.Path
+                            PrinterAction = $printer.Properties.action.Replace("U","Update").Replace("C","Create").Replace("D","Delete").Replace("R","Replace")
+                            PrinterDefault = $printer.Properties.default.Replace("0","False").Replace("1","True")
+                            FilterGroup = $printer.Filters.FilterGroup.Name
+                            GPOType = "Group Policy Preferences"
+                        }
+                    }
+                }
+            }
+            
+            $printerMaps
+        }
+    }
+}
+
+function Confirm-GPOExists {
+	<#
+		.SYNOPSIS
+		Cmdlet that returns true if the GPO exists and false if it doesn't.
+		
+		.DESCRIPTION
+		A cmdlet that take in the name or guid of a GPO and an optional server and then returns true or false if the GPO exists.
+		
+		.PARAMETER Name
+		A string representing the GPO name.
+		
+		.PARAMETER GUID
+		A string representing the GPO GUID.
+		
+		.PARAMETER Server
+		A domain controller which can be used to see if the item exists on a specific domain controller.
+		
+		.EXAMPLE
+		Confirm-ADObjectExists -Name "GPOName1" -Server (Get-ADDomainController).HostName
+		
+		.EXAMPLE
+		Confirm-ADObjectExists -GUID "1234-5678-9101112"
+		
+		.NOTES
+		Name: Confirm-GPOExists
+		Author: Craig Woodford (with help from Jeff Bolduan)
+		LASTEDIT: 8/26/2016, 12:48 PM
+	#>
+	[CmdletBinding(DefaultParameterSetName='Name')]
+	param(
+		[Parameter(Mandatory=$true, HelpMessage="Enter in a valid GPO Name",ParameterSetName='Name')][string]$Name,
+		[Parameter(Mandatory=$true, HelpMessage="Enter in a valid GPO Name",ParameterSetName='GUID')][string]$GUID,
+		[Parameter(Mandatory=$false, HelpMessage="Enter in a valid domain controller.")][string]$Server=(Get-ADDomainController).HostName
+	)
+	$ErrorActionPreference = "SilentlyContinue"
+	Write-Verbose -Message "$Server"
+	try {
+		if($Name) {
+			Write-Verbose -Message "Group Policy Name: $Name"
+			$GPOObject = Get-GPO -Name $Name -Server $Server
+		} elseif($GUID) {
+			Write-Verbose -Message "Group Policy GUID: $GUID"
+			$GPOObject = Get-GPO -Guid $GUID -Server $Server
+		}
+	} catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
+		Write-Verbose -Message "ADIdentityNotFoundException"
+		return $false
+	} catch {
+		Write-Verbose -Message "Other error $($_.Exception.Message)"
+		Write-Error -Exception $_.Exception -Message $_.Exception.Message -TargetObject $_.Exception.ItemName
+		return $false
+	}
+	
+	if ($GPODObject) {
+		return $true
+	}
+	else {
+		return $false	
+	}
+} # end Confirm-GPOExists
