@@ -70,6 +70,6 @@ function Confirm-ADObjectExists {
 		return $true
 	}
 	else {
-		return $false	
+		return $false
 	}
 }

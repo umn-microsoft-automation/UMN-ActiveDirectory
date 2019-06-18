@@ -2,7 +2,7 @@
    .Synopsis
         Return Operating system of given computer
     .DESCRIPTION
-        Queries AD and returns the Operatingsystem attribute for given computer. 
+        Queries AD and returns the Operatingsystem attribute for given computer.
     .EXAMPLE
         get-os wamcitrix
    
@@ -12,7 +12,7 @@
 function Get-OS
 {
     [CmdletBinding()]
-    param 
+    param
     (
         [Parameter(Mandatory)]
         [string]$computername

@@ -6,8 +6,8 @@
 		Takes in a GPO and server name and then determines if the WiFi profiles have the specific server name.
 	.EXAMPLE
 		Test-GPOWiFiServerName -GPO (Get-GPO -Name "This-Is-A-Test") -ServerName "wifiauth.domain.com"
-	.PARAMETER GPO
-		Group policy object to search within
+	.PARAMETER GPOXml
+		Group policy xml obtained by running Get-GPO -Name "Name" | Get-GPOReport -ReportType Xml
 	.PARAMETER ServerName
 		String for the server name to look for.
 #>
@@ -15,16 +15,15 @@ function Test-GPOWiFiServerName {
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory=$true)]
-		[Microsoft.GroupPolicy.Gpo]$GPO,
+		[xml]$GPOXml,
 
 		[Parameter(Mandatory=$true)]
 		[string]$ServerName
 	)
 	process {
-		[xml]$ReportXML = $GPO | Get-GPOReport -ReportType Xml
-		$NamespaceManager = New-Object System.Xml.XmlNamespaceManager($ReportXML.NameTable)
+		$NamespaceManager = New-Object System.Xml.XmlNamespaceManager($GPOXml.NameTable)
 		$NamespaceManager.AddNamespace("root", "http://www.microsoft.com/GroupPolicy/Settings")
-		$GPOSettings = [array]$ReportXML.SelectNodes("//root:Extension", $NamespaceManager)
+		$GPOSettings = [array]$GPOXml.SelectNodes("//root:Extension", $NamespaceManager)
 
 		$Profiles = $GPOSettings.WLanSvcSetting.WLanPolicies.profileList.WLANProfile
 

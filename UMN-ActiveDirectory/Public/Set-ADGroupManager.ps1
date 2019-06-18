@@ -1,23 +1,43 @@
 ﻿<#
-		.Synopsis
-		   Sets manager property on AD group and grants change membership rights.
-		.DESCRIPTION
-		   Sets manager property on AD group and grants change membership rights.
-		   This is done by manipulating properties directly on the DirectoryEntry object
-		   obtained with ADSI. This sets the managedBy property and adds an ACE to the DACL
-		   allowing said manager to modify group membership.
-		   Taken from: https://mcardletech.com/blog/setting-ad-group-managers-with-powershell/
-		.EXAMPLE
-		   Set-GroupManager -ManagerDN "CN=some manager,OU=All Users,DC=Initech,DC=com" -GroupDN "CN=TPS Reports Dir,OU=All Groups,DC=Initech,DC=com"
-		.EXAMPLE
-		   (Get-AdGroup -Filter {Name -like "sharehost - *"}).DistinguishedName | % {Set-GroupManager "CN=some manager,OU=All Users,DC=Initech,DC=com" $_}
+	.Synopsis
+		Sets manager property on AD group and grants change membership rights.
+	.DESCRIPTION
+		Sets manager property on AD group and grants change membership rights.
+		This is done by manipulating properties directly on the DirectoryEntry object
+		obtained with ADSI. This sets the managedBy property and adds an ACE to the DACL
+		allowing said manager to modify group membership.
+		Taken from: https://mcardletech.com/blog/setting-ad-group-managers-with-powershell/
+	.EXAMPLE
+		Set-GroupManager -ManagerDN "CN=some manager,OU=All Users,DC=Initech,DC=com" -GroupDN "CN=TPS Reports Dir,OU=All Groups,DC=Initech,DC=com"
+	.EXAMPLE
+		(Get-AdGroup -Filter {Name -like "sharehost - *"}).DistinguishedName | % {Set-GroupManager "CN=some manager,OU=All Users,DC=Initech,DC=com" $_}
+	.PARAMETER ManagerDN
+		The distinguished name for the manager group.
+	.PARAMETER GroupDN
+		The distinguished name for the group to be managed.
+	.PARAMETER TargetDC
+		The domain controller to target the change on.  If left blank will be pulled from Get-ADDomainController
 #>
 function Set-ADGroupManager {
 	[CmdletBinding()]
 	param(
-		[Parameter(Mandatory=$true, ValueFromPipeline=$false, ValueFromPipelineByPropertyName=$true, Position=0)][string]$ManagerDN,
-		[Parameter(Mandatory=$true, ValueFromPipeline=$false, ValueFromPipelineByPropertyName=$true, Position=1)][string]$GroupDN,
-		[Parameter(Mandatory=$false, ValueFromPipeline=$false, ValueFromPipelineByPropertyName=$true, Position=2)][string]$TargetDC=(Get-ADDomainController).HostName
+		[Parameter(Mandatory=$true,
+			ValueFromPipeline=$false,
+			ValueFromPipelineByPropertyName=$true,
+			Position=0)]
+		[string]$ManagerDN,
+		
+		[Parameter(Mandatory=$true,
+			ValueFromPipeline=$false,
+			ValueFromPipelineByPropertyName=$true,
+			Position=1)]
+		[string]$GroupDN,
+		
+		[Parameter(Mandatory=$false,
+			ValueFromPipeline=$false,
+			ValueFromPipelineByPropertyName=$true,
+			Position=2)]
+		[string]$TargetDC=(Get-ADDomainController).HostName
 	)
 	$ErrorActionPreference = "Stop"
 	try {

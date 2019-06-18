@@ -1,30 +1,34 @@
 ﻿<#
     .Synopsis
-    Function for retrieving user membership of a windows local computer group.
+        Function for retrieving user membership of a windows local computer group.
     .DESCRIPTION
-    Function for retrieving user membership of a windows local computer group.
+        Function for retrieving user membership of a windows local computer group.
     .EXAMPLE
-    Get-MembersLocalGroup -grp 'Administrators' -computer $computer
+        Get-MembersLocalGroup -Group 'Administrators' -computer $Computer
     .EXAMPLE
-    Another example of how to use this cmdlet
+        Another example of how to use this cmdlet
+    .PARAMETER Group
+        Name of the group to get the members of.
+    .PARAMETER Computer
+        Name of the computer on which the group is located.
 #>
 function Get-MembersLocalGroup {
     [CmdletBinding()]
     Param
     (
         [Parameter(Mandatory = $true)]
-        [string]$grp,
+        [string]$Group,
 
         [Parameter(Mandatory = $true)]
-        [string]$computer
+        [string]$Computer
     )
 
     Begin {
     }
     Process {
-        $ADSIComputer = [ADSI]("WinNT://$computer,computer")
-        $group = $ADSIComputer.psbase.children.find($grp, 'Group') 
-        $group.psbase.invoke("members") | ForEach { $_.GetType().InvokeMember("Name", 'GetProperty', $null, $_, $null) }
+        $ADSIComputer = [ADSI]("WinNT://$Computer,computer")
+        $group = $ADSIComputer.psbase.children.find($Group, 'Group')
+        $group.psbase.invoke("members") | ForEach-Object { $_.GetType().InvokeMember("Name", 'GetProperty', $null, $_, $null) }
     }
     End {
     }
