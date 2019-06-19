@@ -29,13 +29,15 @@ function Add-MembersLocalGroup {
         [Parameter(Mandatory = $true)]
         [string]$Computer,
     
-        [Parameter(ParameterSetName = 'User')]
+        [Parameter(Mandatory = $true,
+            ParameterSetName = 'User')]
         [string]$User,
     
-        [Parameter(ParameterSetName = 'Group')]
+        [Parameter(Mandatory = $true,
+            ParameterSetName = 'Group')]
         [string]$Group,
     
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory = $true)]
         [string]$ADDomain
     )
     
@@ -46,16 +48,22 @@ function Add-MembersLocalGroup {
         try {
             switch ($PsCmdlet.ParameterSetName) {
                 'User' { $null = Get-ADUser -Identity $User; $entity = $User }
-                'Group' { $null = Get-ADGroup $Group; $entity = $Group }
+                'Group' { $null = Get-ADGroup -Identity $Group; $entity = $Group }
                 default { Throw "Failure to validate user/group" }
             }
         }
         catch { throw $Error[0] }
-        $de = [ADSI]("WinNT://$Computer/$GroupToAddTo,group")
-        $de.psbase.Invoke("Add", ([ADSI]"WinNT://$ADDomain/$entity").path)
+
+        if(Get-Command Add-LocalGroupMember) {
+            Add-LocalGroupMember -Group $GroupToAddTo -Member "$ADDomain\$entity"
+        } else {
+            # Support older operating systems
+            $de = [ADSI]("WinNT://$Computer/$GroupToAddTo,group")
+            $de.psbase.Invoke("Add", ([ADSI]"WinNT://$ADDomain/$entity").path)
+        }
     
         ## Validate change worked
-        if ( -not (Get-MembersLocalGroup -grp $GroupToAddTo -computer $Computer | Select-String $entity)) { throw "Final check failed, $entity not added" }
+        if ( -not (Get-MembersLocalGroup -Group $GroupToAddTo -Computer $Computer | Select-String $entity)) { throw "Final check failed, $entity not added" }
     
     }
     End {
