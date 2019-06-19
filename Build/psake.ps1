@@ -21,7 +21,7 @@ Properties {
     }
 }
 
-Task Default -Depends Test
+Task Default -Depends Build
 
 Task Init {
     $Lines
@@ -84,4 +84,8 @@ Task Test -Depends Init {
     }
 
     "`n"
+}
+
+Task Build -Depends Test {
+    Update-Metadata -Path $env:BHPSModuleManifest -PropertyName "RequiredModules" -Value @("ActiveDirectory")
 }
