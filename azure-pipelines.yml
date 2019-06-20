@@ -1,0 +1,59 @@
+trigger:
+  branches:
+    include:
+      - '*'
+
+pr:
+  branches:
+    include:
+      - master
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+  - task: PowerShell@2
+    displayName: 'Powershell Build Script'
+    inputs:
+      targetType: filePath
+      filePath: 'Build\build.ps1'
+    env:
+      PROJECT_PUBKEY: $(Project.PubKey)
+      PROJECT_PUBUSER: $(Project.PubUser)
+  
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results/TestResults_PS*.xml'
+    inputs:
+      testResultsFormat: NUnit
+      testResultsFiles: 'Build/TestResults_PS*.xml'
+    condition: succeededOrFailed()
+  
+  - task: reportgenerator@4
+    displayName: 'Report Generator/CodeCoverage_PS*.xml'
+    inputs:
+      reports: 'Build/CodeCoverage_PS*.xml'
+      reporttypes: 'HtmlInline_AzurePipelines'
+      sourcedirs: .
+    condition: not(contains(variables['BHCommitMessage'],'!skipcodecoverage'))
+  
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish code coverage from Build/CodeCoverage_PS*.xml'
+    inputs:
+      summaryFileLocation: 'Build/CodeCoverage_PS*.xml'
+      reportDirectory: coveragereport
+    condition: not(contains(variables['BHCommitMessage'],'!skipcodecoverage'))
+  
+  - task: ArchiveFiles@2
+    displayName: 'ZIP up build directory'
+    inputs:
+      rootFolderOrFile: '$(Build.SourcesDirectory)'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      replaceExistingArchive: true
+  
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'zip'
+      publishLocation: 'Container'
