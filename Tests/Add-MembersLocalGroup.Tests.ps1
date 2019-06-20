@@ -1,6 +1,7 @@
 ﻿$TestConfig = @{
     "TestModuleName" = "UMN-ActiveDirectory"
 }
+
 try {
     if ($ModuleRoot) {
         Import-Module (Join-Path $ModuleRoot "$ModuleName.psd1") -Force
@@ -10,11 +11,11 @@ try {
             Import-Module ..\UMN-ActiveDirectory\UMN-ActiveDirectory.psd1 -Force    
         }
         elseif (Test-Path -Path .\UMN-ActiveDirectory\UMN-ActiveDirectory.psd1) {
-            Import-Module .\UMN-ActiveDirectory\UMN-ActiveDirectory.psd1
+            Import-Module .\UMN-ActiveDirectory\UMN-ActiveDirectory.psd1 -Force
         }
     }
 
-    # Module scope fixes problems with AD mocking.  It needs to be hre to fix issues with running
+    # Module scope fixes problems with AD mocking.  It needs to be here to fix issues with running
     # tests on devices without AD module installed.
     InModuleScope -ModuleName $TestConfig.TestModuleName {
         $TestPresetParams = @{
@@ -25,14 +26,10 @@ try {
         }
 
         $FakeADUser = @{
-            "DistinguishedName"     = "CN=$($TestPresetParams.UserName),CN=Users,DC=contoso,DC=com"
-            "Enabled"               = $true
-            "GivenName"             = ""
-            "Name"                  = $TestPresetParams.UserName
-            "SamAccountName"        = $TestPresetParams.UserName
-            "Surname"               = ""
-            "UserPrincipalName"     = ""
-            "ServicePrincipalNames" = @("spn/a", "spn/b")
+            "DistinguishedName" = "CN=$($TestPresetParams.UserName),CN=Users,DC=contoso,DC=com"
+            "Enabled"           = $true
+            "Name"              = $TestPresetParams.UserName
+            "SamAccountName"    = $TestPresetParams.UserName
         }
 
         $FakeADGroup = @{
@@ -85,6 +82,12 @@ try {
                 It "Should throw an error if the user wasn't added to the local group" {
                     Mock -CommandName Get-MembersLocalGroup -MockWith { return $false }
                     
+                    { Add-MembersLocalGroup -GroupToAddTo $TestPresetParams.AddGroup -Computer $env:COMPUTERNAME -User $TestPresetParams.User -ADDomain $TestPresetParams.DomainName } | Should -Throw
+                }
+                
+                It "Should throw and error if the group wasn't added to the local group" {
+                    Mock -CommandName Get-MembersLocalGroup -MockWith { return $false }
+
                     { Add-MembersLocalGroup -GroupToAddTo $TestPresetParams.AddGroup -Computer $env:COMPUTERNAME -Group $TestPresetParams.Group -ADDomain $TestPresetParams.DomainName } | Should -Throw
                 }
             }
