@@ -70,7 +70,6 @@ function Confirm-ADObjectDCReplication {
 			return $false
 		}
 	} catch {
-		Write-Error -Message "Message: $_.Exception.Message"
-		Write-Error -Message "ItemName: $_.Exception.ItemName"
+		throw $_
 	}
 }
