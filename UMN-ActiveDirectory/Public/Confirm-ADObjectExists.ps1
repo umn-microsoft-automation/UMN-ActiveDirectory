@@ -57,13 +57,8 @@ function Confirm-ADObjectExists {
 				SamAccountName -eq $Identity)
 			} -Server $Server
 		}
-	} catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
-		Write-Verbose -Message "ADIdentityNotFoundException"
-		return $false
 	} catch {
-		Write-Verbose -Message "Other error $($_.Exception.Message)"
-		Write-Error -Exception $_.Exception -Message $_.Exception.Message -TargetObject $_.Exception.ItemName
-		return $false
+		throw $_
 	}
 	
 	if ($ADObject) {
