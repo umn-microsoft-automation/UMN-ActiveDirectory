@@ -23,6 +23,8 @@ try {
             "UserName"   = "TestUser"
             "Group"      = "TestGroup"
             "AddGroup"   = "TestLocalGroup"
+            "ComputerName" = "TestComputer"
+            "OU" = "OU=TestOU,DC=contoso,DC=com"
         }
 
         $FakeADUser = @{
@@ -33,10 +35,17 @@ try {
         }
 
         $FakeADGroup = @{
-            "DistingusihedName" = "CN=$($TestPresetParams.Group),CN=Groups,DC=contoso,DC=com"
+            "DistinguishedName" = "CN=$($TestPresetParams.Group),CN=Groups,DC=contoso,DC=com"
             "Enabled"           = $true
             "Name"              = $TestPresetParams.Group
             "SamAccountName"    = $TestPresetParams.Group
+        }
+
+        $FakeADComputer = @{
+            "DistinguishedName" = "CN=$($TestPresetParams.ComputerName),CN=Computers,DC=contoso,DC=com"
+            "Enabled" = $true
+            "Name" = $TestPresetParams.ComputerName
+            "SamAccountName" = $TestPresetParams.ComputerName
         }
 
         function Get-ADUser {
