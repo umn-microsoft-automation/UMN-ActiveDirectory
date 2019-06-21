@@ -1,12 +1,14 @@
 ﻿<#
-   .Synopsis
+   .SYNOPSIS
         Return Operating system of given computer
+
     .DESCRIPTION
         Queries AD and returns the Operatingsystem attribute for given computer.
+
     .EXAMPLE
-        get-os wamcitrix
+        Get-OS wamcitrix
    
-    .PARAMETER computername
+    .PARAMETER ComputerName
         Name of computer object
 #>
 function Get-OS
@@ -14,8 +16,9 @@ function Get-OS
     [CmdletBinding()]
     param
     (
-        [Parameter(Mandatory)]
-        [string]$computername
+        [Parameter(Mandatory = $true)]
+        [string]$ComputerName
     )
-    get-adcomputer $computername -Properties Operatingsystem|select -ExpandProperty  Operatingsystem
+
+    Get-ADComputer $ComputerName -Properties OperatingSystem | Select-Object -ExpandProperty Operatingsystem
 }

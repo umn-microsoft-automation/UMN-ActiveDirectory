@@ -1,15 +1,16 @@
 ﻿$TestPresetParams = @{
-    "DomainName"   = "contoso.com"
-    "UserName"     = "TestUser"
-    "Group"        = "TestGroup"
-    "AddGroup"     = "TestLocalGroup"
-    "ComputerName" = "TestComputer"
-    "OU"           = "OU=TestOU,DC=contoso,DC=com"
-    "OU2"          = "OU=TestOU2,OU=TestOU,DC=contoso,DC=com"
-    "OUName"       = "TestOU"
-    "OU2Name"      = "TestOU2"
-    "GPOName"      = "TestGPO"
-    "GPOGuid"      = [Guid]::NewGuid()
+    "DomainName"      = "contoso.com"
+    "UserName"        = "TestUser"
+    "Group"           = "TestGroup"
+    "AddGroup"        = "TestLocalGroup"
+    "ComputerName"    = "TestComputer"
+    "OperatingSystem" = "Windows 10 Enterprise"
+    "OU"              = "OU=TestOU,DC=contoso,DC=com"
+    "OU2"             = "OU=TestOU2,OU=TestOU,DC=contoso,DC=com"
+    "OUName"          = "TestOU"
+    "OU2Name"         = "TestOU2"
+    "GPOName"         = "TestGPO"
+    "GPOGuid"         = [Guid]::NewGuid()
 }
 
 $FakeADUser = @{
@@ -31,6 +32,7 @@ $FakeADComputer = @{
     "Enabled"           = $true
     "Name"              = $TestPresetParams.ComputerName
     "SamAccountName"    = $TestPresetParams.ComputerName
+    "OperatingSystem"   = $TestPresetParams.OperatingSystem
 }
 
 $FakeADOU = @{
