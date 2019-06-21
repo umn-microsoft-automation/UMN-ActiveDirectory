@@ -63,7 +63,7 @@ steps:
       publishLocation: 'Container'
   
   - task: NuGetCommand@2
-    intpus:
+    inputs:
       command: 'push'
       packagesToPush: '$(Build.SourcesDirectory)\BuildOutput\*.nupkg'
       nuGetFeedType: 'internal'
