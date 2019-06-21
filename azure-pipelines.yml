@@ -11,6 +11,8 @@ pr:
 pool:
   vmImage: 'windows-latest'
 
+name: $(Date:yyyy).$(Date:MM).$(Date:dd).$(Rev:rr)
+
 steps:
   - task: NuGetToolInstaller@1
     inputs:
@@ -48,12 +50,12 @@ steps:
     condition: not(contains(variables['BHCommitMessage'],'!skipcodecoverage'))
   
   - task: ArchiveFiles@2
-    displayName: 'ZIP up build directory'
+    displayName: 'ZIP build directory'
     inputs:
       rootFolderOrFile: '$(Build.SourcesDirectory)'
       includeRootFolder: false
       archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildNumber).zip'
       replaceExistingArchive: true
   
   - task: PublishBuildArtifacts@1
