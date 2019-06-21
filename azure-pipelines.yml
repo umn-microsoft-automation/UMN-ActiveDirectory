@@ -62,7 +62,7 @@ steps:
       ArtifactName: 'zip'
       publishLocation: 'Container'
   
-  -task: NuGetCommand@2
+  - task: NuGetCommand@2
     intpus:
       command: 'push'
       packagesToPush: '$(Build.SourcesDirectory)\BuildOutput\*.nupkg'
