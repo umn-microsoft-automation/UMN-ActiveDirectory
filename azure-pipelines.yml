@@ -12,6 +12,10 @@ pool:
   vmImage: 'windows-latest'
 
 steps:
+  - task: NuGetToolInstaller@1
+    inputs:
+      versionSpec:
+
   - task: PowerShell@2
     displayName: 'Powershell Build Script'
     inputs:
@@ -57,3 +61,12 @@ steps:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)'
       ArtifactName: 'zip'
       publishLocation: 'Container'
+  
+  -task: NuGetCommand@2
+    intpus:
+      command: 'push'
+      packagesToPush: '$(Build.SourcesDirectory)\BuildOutput\*.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: '/8e899429-2204-41f0-820a-3b7b5cb96ddd'
+      verbosityPush: 'Detailed'
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
