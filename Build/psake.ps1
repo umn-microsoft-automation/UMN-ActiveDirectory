@@ -148,7 +148,6 @@ Task Build -Depends Test {
     Write-Warning -Message "NewVersion = $($NewVersion.ToString())"
 
     Update-Metadata -Path $env:BHPSModuleManifest -PropertyName "ModuleVersion" -Value $NewVersion -ErrorAction Stop
-    Update-Metadata -Path $env:BHPSModuleManifest -PropertyName "RequiredModules" -Value @("ActiveDirectory") -ErrorAction Stop
 
     Register-PSRepository -Name "LocalPSRepo" -SourceLocation "$env:BUILD_SOURCESDIRECTORY\BuildOutput" -PublishLocation "$env:BUILD_SOURCESDIRECTORY\BuildOutput" -InstallationPolicy Trusted
     nuget.exe sources Add -Name "LocalPSRepo" -Source "$env:BUILD_SOURCESDIRECTORY\BuildOutput"
