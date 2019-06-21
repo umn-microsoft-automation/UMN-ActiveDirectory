@@ -30,9 +30,6 @@ try {
             }
         }
 
-        function Get-ADOrganizationalUnit { return $null }
-        function Get-GPO { return $null }
-
         Describe "Get-AllGPOsUnderOU" {
             Context "Should pass back a valid result if given good info" {
                 Mock -CommandName Get-GPO -MockWith { return [PSCustomObject]$FakeGPO }

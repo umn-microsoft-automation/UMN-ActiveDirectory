@@ -62,3 +62,4 @@ function Get-ADUser { return [PSCustomObject]$FakeADUser }
 function Get-ADGroup { return [PSCustomObject]$FakeADGroup }
 function Get-ADOrganizationalUnit { return [PSCustomObject]$FakeADOU }
 function Get-ADObject { return [PSCustomObject]$FakeADComputer }
+function Get-GPO { return [PSCustomObject]$FakeGPO }
