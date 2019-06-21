@@ -90,7 +90,7 @@ Task Build -Depends Test {
     $Lines
     Set-ModuleFunctions
 
-    if(-not (Test-Path -Path $env:GHBuildOutput)) {
+    if(-not (Test-Path -Path $env:BHBuildOutput)) {
         New-Item $env:BHBuildOutput -Force -ItemType Directory
     }
 
@@ -120,7 +120,7 @@ Task Build -Depends Test {
     }
 
     try {
-        [System.Version]$GalleryVersion = Get-NextNugetPackageVersion -Name $env:GHProjectName -ErrorAction Stop
+        [System.Version]$GalleryVersion = Get-NextNugetPackageVersion -Name $env:BHProjectName -ErrorAction Stop
     } catch {
         Write-Warning -Message "Failed to update gallery version for '$env:BHProjectName': $_.`nContinuing with existing version"
     }
