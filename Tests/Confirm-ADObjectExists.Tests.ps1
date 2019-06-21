@@ -18,53 +18,17 @@ try {
     # Module scope fixes problems with AD mocking.  It needs to be here to fix issues with running
     # tests on devices without AD module installed.
     InModuleScope -ModuleName $TestConfig.TestModuleName {
-        $TestPresetParams = @{
-            "DomainName" = "contoso.com"
-            "UserName"   = "TestUser"
-            "Group"      = "TestGroup"
-            "AddGroup"   = "TestLocalGroup"
-            "ComputerName" = "TestComputer"
-            "OU" = "OU=TestOU,DC=contoso,DC=com"
-            "OUName" = "TestOU"
-        }
-
-        $FakeADUser = @{
-            "DistinguishedName" = "CN=$($TestPresetParams.UserName),CN=Users,DC=contoso,DC=com"
-            "Enabled"           = $true
-            "Name"              = $TestPresetParams.UserName
-            "SamAccountName"    = $TestPresetParams.UserName
-        }
-
-        $FakeADGroup = @{
-            "DistinguishedName" = "CN=$($TestPresetParams.Group),CN=Groups,DC=contoso,DC=com"
-            "Enabled"           = $true
-            "Name"              = $TestPresetParams.Group
-            "SamAccountName"    = $TestPresetParams.Group
-        }
-
-        $FakeADComputer = @{
-            "DistinguishedName" = "CN=$($TestPresetParams.ComputerName),CN=Computers,DC=contoso,DC=com"
-            "Enabled" = $true
-            "Name" = $TestPresetParams.ComputerName
-            "SamAccountName" = $TestPresetParams.ComputerName
-        }
-
-        $FakeADOU = @{
-            "DistinguishedName" = $TestPresetParams.OU
-            "Name" = $TestPresetParams.OUName
-        }
-
-        function Get-ADDomainController {
-            return [PSCustomObject]@{
-                HostName = "DC1"
+        if($ModuleRoot) {
+            . "$ModuleRoot..\Tests\StandardTestData.ps1"
+        } else {
+            if(Test-Path -Path "StandardTestData.ps1") {
+                . .\StandardTestData.ps1
+            } elseif(Test-Path -Path "Tests\StandardTestData.ps1") {
+                . .\Tests\StandardTestData.ps1
+            } else {
+                throw "Error importing StandardTestData.ps1"
             }
         }
-
-        function Get-ADComputer { return [PSCustomObject]$FakeADComputer }
-        function Get-ADUser { return [PSCustomObject]$FakeADUser }
-        function Get-ADGroup { return [PSCustomObject]$FakeADGroup }
-        function Get-ADOrganizationalUnit { return [PSCustomObject]$FakeADOU }
-        function Get-ADObject { return [PSCustomObject]$FakeADComputer }
 
         Describe "Confirm-ADObjectExists" {
             Mock -CommandName Get-ADDomainController -MockWith {
