@@ -27,8 +27,8 @@ function Get-MembersLocalGroup {
     }
     Process {
         $ADSIComputer = [ADSI]("WinNT://$Computer,computer")
-        $group = $ADSIComputer.psbase.children.find($Group, 'Group')
-        $group.psbase.invoke("members") | ForEach-Object { $_.GetType().InvokeMember("Name", 'GetProperty', $null, $_, $null) }
+        $LocalGroup = $ADSIComputer.psbase.children.find($Group, 'Group')
+        $LocalGroup.psbase.Invoke("members") | ForEach-Object { $_.GetType().InvokeMember("Name", 'GetProperty', $null, $_, $null) }
     }
     End {
     }
