@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-16"?>
+<GPO xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.microsoft.com/GroupPolicy/Settings">
+  <Identifier>
+    <Identifier xmlns="http://www.microsoft.com/GroupPolicy/Types">{73D04CCD-325C-43FB-9D7D-D33DE848B7EE}</Identifier>
+    <Domain xmlns="http://www.microsoft.com/GroupPolicy/Types">ad.umn.edu</Domain>
+  </Identifier>
+  <Name>WiFiExample</Name>
+  <IncludeComments>true</IncludeComments>
+  <CreatedTime>2017-04-26T15:45:30</CreatedTime>
+  <ModifiedTime>2018-02-22T19:39:15</ModifiedTime>
+  <ReadTime>2019-06-21T18:44:49.6716422Z</ReadTime>
+  <FilterDataAvailable>true</FilterDataAvailable>
+  <Computer>
+    <VersionDirectory>5</VersionDirectory>
+    <VersionSysvol>5</VersionSysvol>
+    <Enabled>true</Enabled>
+    <ExtensionData>
+      <Extension xmlns:q1="http://www.microsoft.com/GroupPolicy/Settings/WLanSvc" xsi:type="q1:WLanSvcSettings">
+        <q1:WLanSvcSetting>
+          <WLanPolicies xmlns="http://www.microsoft.com/networking/WLAN/policy/v1">
+            <name>Example WiFi</name>
+            <description>Example WiFi Config</description>
+            <policyType>Vista</policyType>
+            <globalFlags>
+              <enableAutoConfig>true</enableAutoConfig>
+              <showDeniedNetwork>false</showDeniedNetwork>
+              <enableSoftAP xmlns="http://www.microsoft.com/networking/WLAN/policy/v3">true</enableSoftAP>
+              <enableExplicitCreds xmlns="http://www.microsoft.com/networking/WLAN/policy/v3">true</enableExplicitCreds>
+              <allowEveryoneToCreateAllUserProfiles>true</allowEveryoneToCreateAllUserProfiles>
+              <onlyUseGPProfilesForAllowedNetworks xmlns="http://www.microsoft.com/networking/WLAN/policy/v2">false</onlyUseGPProfilesForAllowedNetworks>
+              <enableWFD xmlns="http://www.microsoft.com/networking/WLAN/policy/v4">true</enableWFD>
+            </globalFlags>
+            <networkFilter>
+              <allowList>
+                <network>
+                  <networkName>WiFiSSID1</networkName>
+                  <networkType>ESS</networkType>
+                </network>
+              </allowList>
+              <blockList>
+                <network>
+                  <networkName>WiFiSSID2</networkName>
+                  <networkType>ESS</networkType>
+                </network>
+                <network>
+                  <networkName>WiFiSSID3</networkName>
+                  <networkType>ESS</networkType>
+                </network>
+              </blockList>
+              <denyAllIBSS>false</denyAllIBSS>
+              <denyAllESS>false</denyAllESS>
+            </networkFilter>
+            <profileList>
+              <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+                <name>WiFiSSID1</name>
+                <SSIDConfig>
+                  <SSID>
+                    <hex></hex>
+                    <name>WiFiSSID1</name>
+                  </SSID>
+                  <nonBroadcast>false</nonBroadcast>
+                </SSIDConfig>
+                <connectionType>ESS</connectionType>
+                <connectionMode>auto</connectionMode>
+                <autoSwitch>true</autoSwitch>
+                <MSM>
+                  <security>
+                    <authEncryption>
+                      <authentication>WPA2</authentication>
+                      <encryption>AES</encryption>
+                      <useOneX>true</useOneX>
+                    </authEncryption>
+                    <PMKCacheMode>enabled</PMKCacheMode>
+                    <PMKCacheTTL>720</PMKCacheTTL>
+                    <PMKCacheSize>128</PMKCacheSize>
+                    <preAuthThrottle>3</preAuthThrottle>
+                    <OneX xmlns="http://www.microsoft.com/networking/OneX/v1">
+                      <cacheUserData>true</cacheUserData>
+                      <maxAuthFailures>1</maxAuthFailures>
+                      <authMode>user</authMode>
+                      <singleSignOn>
+                        <type>postLogon</type>
+                        <maxDelay>10</maxDelay>
+                        <allowAdditionalDialogs>false</allowAdditionalDialogs>
+                        <userBasedVirtualLan>false</userBasedVirtualLan>
+                      </singleSignOn>
+                      <EAPConfig>
+                        <EapHostConfig xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
+                          <EapMethod>
+                            <Type xmlns="http://www.microsoft.com/provisioning/EapCommon">25</Type>
+                            <VendorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorId>
+                            <VendorType xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorType>
+                            <AuthorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</AuthorId>
+                          </EapMethod>
+                          <Config xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
+                            <Eap xmlns="http://www.microsoft.com/provisioning/BaseEapConnectionPropertiesV1">
+                              <Type>25</Type>
+                              <EapType xmlns="http://www.microsoft.com/provisioning/MsPeapConnectionPropertiesV1">
+                                <ServerValidation>
+                                  <DisableUserPromptForServerValidation>false</DisableUserPromptForServerValidation>
+                                  <ServerNames>contoso.com</ServerNames>
+                                </ServerValidation>
+                                <FastReconnect>true</FastReconnect>
+                                <InnerEapOptional>false</InnerEapOptional>
+                                <Eap xmlns="http://www.microsoft.com/provisioning/BaseEapConnectionPropertiesV1">
+                                  <Type>26</Type>
+                                  <EapType xmlns="http://www.microsoft.com/provisioning/MsChapV2ConnectionPropertiesV1">
+                                    <UseWinLogonCredentials>true</UseWinLogonCredentials>
+                                  </EapType>
+                                </Eap>
+                                <EnableQuarantineChecks>false</EnableQuarantineChecks>
+                                <RequireCryptoBinding>false</RequireCryptoBinding>
+                                <PeapExtensions>
+                                  <PerformServerValidation xmlns="http://www.microsoft.com/provisioning/MsPeapConnectionPropertiesV2">true</PerformServerValidation>
+                                  <AcceptServerName xmlns="http://www.microsoft.com/provisioning/MsPeapConnectionPropertiesV2">true</AcceptServerName>
+                                </PeapExtensions>
+                              </EapType>
+                            </Eap>
+                          </Config>
+                        </EapHostConfig>
+                      </EAPConfig>
+                    </OneX>
+                  </security>
+                </MSM>
+              </WLANProfile>
+            </profileList>
+          </WLanPolicies>
+        </q1:WLanSvcSetting>
+      </Extension>
+      <Name>WLanSvc Networks</Name>
+    </ExtensionData>
+  </Computer>
+</GPO>

@@ -1,4 +1,17 @@
-﻿$TestPresetParams = @{
+﻿# Load any additional data from external files
+if($ModuleRoot) {
+    [xml]$FakeWiFiprofileXML = Get-Content -Path "$ModuleRoot..\Tests\WiFiXMLExample.xml"
+} else {
+    if(Test-Path -Path "StandardTestData.ps1") {
+        [xml]$FakeWiFiProfileXML = Get-Content .\WiFiXMLExample.xml
+    } elseif(Test-Path -Path "Tests\StandardTestData.ps1") {
+        [xml]$FakeWiFiProfileXML = Get-Content -Path .\Tests\WiFiXMLExample.xml
+    } else {
+        throw "Error importing WiFiXMLExample.xml"
+    }
+}
+
+$TestPresetParams = @{
     "DomainName"      = "contoso.com"
     "UserName"        = "TestUser"
     "Group"           = "TestGroup"
