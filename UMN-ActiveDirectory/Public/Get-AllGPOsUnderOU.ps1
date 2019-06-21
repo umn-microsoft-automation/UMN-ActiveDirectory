@@ -1,14 +1,18 @@
 ﻿<#
 	.SYNOPSIS
 		Takes in a base OU and then grabs all the unique group policies linked under the OU.
+		
 	.DESCRIPTION
 		Give this function an OU and it looks through the OU and sub OU's and gets all the unique GPOs.
+		
 	.EXAMPLE
 		Get-AllGPOsUnderOU -SearchBase ="OU=Test,DC=ad,DC=contoso,DC=.com"
+
 	.PARAMETER SearchBase
 		Distingusihed Name of the top level OU to start searching for group policies in.
+
 	.OUTPUTS
-		ArrayList of all the GPO objects.
+		ArrayList of all the guids and GPO objects.
 #>
 function Get-AllGPOsUnderOU {
 	[CmdletBinding()]
@@ -18,26 +22,27 @@ function Get-AllGPOsUnderOU {
 		[string]$SearchBase
 	)
 	process {
-		$ReturnObject = New-Object -ComObject System.Collections.ArrayList
+		[System.Collections.ArrayList]$ReturnObject = @()
+
 		$GPOs = Get-ADOrganizationalUnit -SearchBase $SearchBase -Filter * | Select-Object -ExpandProperty "LinkedGroupPolicyObjects" -Unique
 
 		foreach($GPO in $GPOs) {
-			foreach($GPO in $GPOs) {
-				$GPOInfo = [adsi]"LDAP://$GPO" | Select-Object DisplayName
-				$ReturnObject -eq $null
-				if($ReturnObject.Count -eq 0) {
+			$GPOGuid = $GPO | Select-String -Pattern "\{(.*?)\}" | ForEach-Object { $_.Matches.Groups[0].Value }
+			try {
+				if($ReturnObject.Guid -notcontains $GPOGuid) {
+					Write-Verbose -Message "Adding new item: $GPOGuid"
 
-					Write-Verbose -Message "Added: $($GPOInfo.DisplayName.ToString())"
-					$ReturnObject.Add((Get-GPO -Name $GPOInfo.DisplayName.ToString()))
+					$GPOInfo = Get-GPO -Guid $GPOGuid
 
-				} elseif(-not $ReturnObject.DisplayName.Contains($GPOInfo.DisplayName.ToString())) {
-
-					Write-Verbose -Message "Added: $($GPOInfo.DisplayName.ToString())"
-					$ReturnObject.Add((Get-GPO -Name $GPOInfo.DisplayName.ToString()))
-
+					$null = $ReturnObject.Add([PSCustomObject]@{
+						"Guid" = $GPOGuid
+						"GPO" = $GPOInfo
+					})
 				} else {
-					Write-Verbose -Message "Duplicate: $($GPOInfo.DisplayName.ToString())"
+					Write-Verbose -Message "Skipping already existing item: $GPOGuid"
 				}
+			} catch {
+				throw $_
 			}
 		}
 
