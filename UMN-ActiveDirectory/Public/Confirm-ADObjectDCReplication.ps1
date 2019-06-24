@@ -47,13 +47,13 @@ function Confirm-ADObjectDCReplication {
 
 		while(($Count -le $MaxWait) -and ($DomainControllers)) {
 			# Walk through each DC and identify the DC's that see the AD object
-			$DomainControllers | Foreach-Object {
-				if(Confirm-ADObjectExists -Identity $ADObject -Server $_ -Type $Type) {
-					$null = $GoodServers.Add($_)
+			foreach($DomainController in $DomainControllers) {
+				if(Confirm-ADObjectExists -Identity $ADObject -Server $DomainController -Type $Type) {
+					$null = $GoodServers.Add($DomainController)
+					$DomainControllers.Remove($DomainController)
 				}
 			}
 
-			# Remove the DC's that already see the AD object from the list of DC's to check
 
 			$GoodServers | Foreach-Object {
 				$DomainControllers.Remove($_)
