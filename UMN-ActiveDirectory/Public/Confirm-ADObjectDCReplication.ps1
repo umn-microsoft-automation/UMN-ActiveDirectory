@@ -54,11 +54,6 @@ function Confirm-ADObjectDCReplication {
 				}
 			}
 
-
-			$GoodServers | Foreach-Object {
-				$DomainControllers.Remove($_)
-			}
-
 			$null = Start-Sleep -Seconds 1
 
 			$Count++
