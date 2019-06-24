@@ -11,7 +11,13 @@ pr:
 pool:
   vmImage: 'windows-latest'
 
+name: $(Date:yyyy).$(Date:MM).$(Date:dd).$(Rev:rr)
+
 steps:
+  - task: NuGetToolInstaller@1
+    inputs:
+      versionSpec:
+
   - task: PowerShell@2
     displayName: 'Powershell Build Script'
     inputs:
@@ -44,12 +50,12 @@ steps:
     condition: not(contains(variables['BHCommitMessage'],'!skipcodecoverage'))
   
   - task: ArchiveFiles@2
-    displayName: 'ZIP up build directory'
+    displayName: 'ZIP build directory'
     inputs:
       rootFolderOrFile: '$(Build.SourcesDirectory)'
       includeRootFolder: false
       archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildNumber).zip'
       replaceExistingArchive: true
   
   - task: PublishBuildArtifacts@1
@@ -57,3 +63,12 @@ steps:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)'
       ArtifactName: 'zip'
       publishLocation: 'Container'
+  
+  - task: NuGetCommand@2
+    inputs:
+      command: 'push'
+      packagesToPush: '$(Build.SourcesDirectory)\BuildOutput\*.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: '/8e899429-2204-41f0-820a-3b7b5cb96ddd'
+      verbosityPush: 'Detailed'
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
