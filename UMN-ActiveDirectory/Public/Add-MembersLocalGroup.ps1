@@ -54,7 +54,7 @@ function Add-MembersLocalGroup {
         }
         catch { throw $Error[0] }
 
-        if(Get-Command Add-LocalGroupMember) {
+        if(Get-Command Add-LocalGroupMember -ErrorAction SilentlyContinue) {
             Add-LocalGroupMember -Group $GroupToAddTo -Member "$ADDomain\$entity"
         } else {
             # Support older operating systems
