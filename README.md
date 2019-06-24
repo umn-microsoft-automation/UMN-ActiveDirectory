@@ -1,11 +1,11 @@
 # UMN-ActiveDirectory
 
 ## Table of Contents
-- [UMN-ActiveDirectory](#umn-activedirectory)
-  - [Table of Contents](#table-of-contents)
-  - [Build Status](#build-status)
-  - [Description](#description)
-  - [Usage](#usage)
+- [UMN-ActiveDirectory](#UMN-ActiveDirectory)
+  - [Table of Contents](#Table-of-Contents)
+  - [Build Status](#Build-Status)
+  - [Description](#Description)
+  - [Usage](#Usage)
 
 ## Build Status
 
