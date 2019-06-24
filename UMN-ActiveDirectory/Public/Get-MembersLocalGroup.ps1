@@ -5,8 +5,6 @@
         Function for retrieving user membership of a windows local computer group.
     .EXAMPLE
         Get-MembersLocalGroup -Group 'Administrators' -computer $Computer
-    .EXAMPLE
-        Another example of how to use this cmdlet
     .PARAMETER Group
         Name of the group to get the members of.
     .PARAMETER Computer
