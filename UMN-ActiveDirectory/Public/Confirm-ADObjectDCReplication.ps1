@@ -50,8 +50,11 @@ function Confirm-ADObjectDCReplication {
 			foreach($DomainController in $DomainControllers) {
 				if(Confirm-ADObjectExists -Identity $ADObject -Server $DomainController -Type $Type) {
 					$null = $GoodServers.Add($DomainController)
-					$DomainControllers.Remove($DomainController)
 				}
+			}
+
+			foreach($DomainController in $GoodServers) {
+				$null = $DomainControllers.Remove($DomainController)
 			}
 
 			$null = Start-Sleep -Seconds 1
