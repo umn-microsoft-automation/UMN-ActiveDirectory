@@ -434,3 +434,24 @@ function Test-GPOWiFiServerName {
 		return $ReturnObject
 	}
 }
+
+
+ 
+ function Remove-AllGroups ($username)
+ {   
+#.Synopsis
+ #      Removes user from allgroups the caller has the perms to remove from. 
+ #  .DESCRIPTION
+ #    Finds all AD groups sans 'domain users' and attempts to remove from all.  
+  
+ #   .EXAMPLE
+ #  remove-allgroups zjmartin 
+ 
+    try
+    {
+    Get-ADPrincipalGroupMembership $UserName|where name -not 'Domain Users'|foreach  {Remove-ADPrincipalGroupMembership  -Identity $username -MemberOf $_ -Confirm:$false}
+    } 
+    catch {}
+   
+
+ }
