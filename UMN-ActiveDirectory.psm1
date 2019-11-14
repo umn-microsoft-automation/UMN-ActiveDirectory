@@ -437,7 +437,8 @@ function Test-GPOWiFiServerName {
 
 
  
- function Remove-AllGroups ($username)
+ 
+ function Remove-AllGroups ($Username)
  {   
 #.Synopsis
  #      Removes user from allgroups the caller has the perms to remove from. 
@@ -446,12 +447,13 @@ function Test-GPOWiFiServerName {
   
  #   .EXAMPLE
  #  remove-allgroups zjmartin 
- 
+ $UserName= 'zjmartin' 
     try
     {
-    Get-ADPrincipalGroupMembership $UserName|where name -not 'Domain Users'|foreach  {Remove-ADPrincipalGroupMembership  -Identity $username -MemberOf $_ -Confirm:$false}
+    Get-ADPrincipalGroupMembership $UserName|where name -notmatch 'Domain Users'|foreach  {Remove-ADPrincipalGroupMembership  -Identity $username -MemberOf $_ -Confirm:$false
+                                                                                       write-host "Removing from: " $_     }
     } 
     catch {}
-   
+ 
 
  }
