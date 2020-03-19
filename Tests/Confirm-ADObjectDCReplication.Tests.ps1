@@ -92,26 +92,26 @@ try {
             }
 
             Context "Error during main confirmation logic" {
-                Mock -CommandName Confirm-ADObjectExists { throw "error" }
+                Mock -CommandName Confirm-ADObjectExists { throw [System.Exception] }
 
-                It "Should throw an error if there is an error during the confirm logic for a computer" {
-                    { Confirm-ADObjectDCReplication -ADObject $TestPresetParams.ComputerName -Type "Computer" } | Should -Throw
+                It "Should not throw an error if there is an error during the confirm logic for a computer" {
+                    { Confirm-ADObjectDCReplication -ADObject $TestPresetParams.ComputerName -Type "Computer" -MaxWait 1 } | Should -Not -Throw
                 }
 
-                It "Should throw an error if there is an error during the confirm logic for a user" {
-                    { Confirm-ADObjectDCReplication -ADObject $TestPresetParams.UserName -Type "User" } | Should -Throw
+                It "Should not throw an error if there is an error during the confirm logic for a user" {
+                    { Confirm-ADObjectDCReplication -ADObject $TestPresetParams.UserName -Type "User" -MaxWait 1 } | Should -Not -Throw
                 }
 
-                It "Should throw an error if there is an error during the confirm logic for a group" {
-                    { Confirm-ADObjectDCReplication -ADObject $TestPresetParams.Group -Type "Group" } | Should -Throw
+                It "Should not throw an error if there is an error during the confirm logic for a group" {
+                    { Confirm-ADObjectDCReplication -ADObject $TestPresetParams.Group -Type "Group" -MaxWait 1 } | Should -Not -Throw
                 }
 
-                It "Should throw an error if there is an error during the confirm logic for an OU" {
-                    { Confirm-ADObjectDCReplication -ADObject $TestPresetParams.OU -Type "OU" } | Should -Throw
+                It "Should not throw an error if there is an error during the confirm logic for an OU" {
+                    { Confirm-ADObjectDCReplication -ADObject $TestPresetParams.OU -Type "OU" -MaxWait 1 } | Should -Not -Throw
                 }
 
-                It "Should throw an error if there is an error during the confirm logic for an unknown object" {
-                    { Confirm-ADObjectDCReplication -ADObject "SomethingUnknown" -Type "Unknown" } | Should -Throw
+                It "Should not throw an error if there is an error during the confirm logic for an unknown object" {
+                    { Confirm-ADObjectDCReplication -ADObject "SomethingUnknown" -Type "Unknown" -MaxWait 1 } | Should -Not -Throw
                 }
             }
         }
