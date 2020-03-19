@@ -7,11 +7,11 @@ try {
         Import-Module (Join-Path $ModuleRoot "$ModuleName.psd1") -Force
     }
     else {
-        if (Test-Path -Path ..\UMN-ActiveDirectory\UMN-ActiveDirectory.psd1) {
-            Import-Module ..\UMN-ActiveDirectory\UMN-ActiveDirectory.psd1 -Force    
+        if (Test-Path -Path ..\$($TestConfig.TestModuleName)\$($TestConfig.TestModuleName).psd1) {
+            Import-Module ..\$($TestConfig.TestModuleName)\$($TestConfig.TestModuleName).psd1 -Force    
         }
-        elseif (Test-Path -Path .\UMN-ActiveDirectory\UMN-ActiveDirectory.psd1) {
-            Import-Module .\UMN-ActiveDirectory\UMN-ActiveDirectory.psd1 -Force
+        elseif (Test-Path -Path .\$($TestConfig.TestModuleName)\$($TestConfig.TestModuleName).psd1) {
+            Import-Module .\$($TestConfig.TestModuleName)\$($TestConfig.TestModuleName).psd1 -Force
         }
     }
 
