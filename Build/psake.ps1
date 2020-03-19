@@ -14,6 +14,7 @@ Properties {
     $TestFile = "TestResults_PS$PSVersion`_$Timestamp.xml"
     $CodeCoverageFile = "CodeCoverage_PS$PSVersion`_$Timestamp.xml"
     $Lines = '----------------------------------------------------------------------'
+    $BuildDir = "C:\BuildOutput"
 
     [hashtable]$Verbose = @{}
     if($env:BHCommitMessage -match "!verbose") {
@@ -88,7 +89,7 @@ Task Test -Depends Init {
 
 Task Build -Depends Test {
     $Lines
-    Set-ModuleFunctions
+    #Set-ModuleFunctions
 
     if(-not (Test-Path -Path $env:BHBuildOutput)) {
         New-Item $env:BHBuildOutput -Force -ItemType Directory
@@ -119,6 +120,15 @@ Task Build -Depends Test {
         [System.Version]$AzureDevOpsVersion = "0.0.1"
     }
 
+    Write-Warning -Message "BuildDir = $BuildDir"
+    Write-Warning -Message "$(Test-Path -Path $BuildDir)"
+    
+    if(Get-Command -Name "Register-PSRepository" -ErrorAction SilentlyContinue) {
+        Register-PSRepository -Name "LocalPSRepo" -SourceLocation "$BuildDir" -PublishLocation "$BuildDir" -InstallationPolicy Trusted
+    } else {
+        nuget.exe sources Add -Name "LocalPSRepo" -Source "$BuildDir"
+    }
+
     try {
         [System.Version]$GalleryVersion = Get-NextNugetPackageVersion -Name $env:BHProjectName -ErrorAction Stop
     } catch {
@@ -131,13 +141,22 @@ Task Build -Depends Test {
         Write-Warning -Message "Failed to update GitHub version for '$env:BHProjectName': $_`nContinuing with existing version"
     }
 
+    try {
+        [System.Version]$LocalPSRepoVersion = Find-Module -Name $env:BHProjectName | Select-Object -ExpandProperty Version
+    } catch {
+        [System.Version]$LocalPSRepoVersion = "0.0.1"
+        Write-Warning -Message "Failed to pull local repo version."
+    }
+
     Write-Host "---"
     Write-Host "GalleryVersion = $($GalleryVersion.ToString())"
     Write-Host "AzureDevOpsVersion = $($AzureDevOpsVersion.ToString())"
     Write-Host "GitHubVersion = $($GitHubVersion.ToString())"
     Write-Host "---"
 
-    if(($GalleryVersion -ge $GitHubVersion) -and ($GalleryVersion -ge $AzureDevOpsVersion)) {
+    if(($LocalPSRepoVersion -ge $GitHubVersion) -and ($LocalPSRepoVersion -ge $AzureDevOpsVersion) -and ($LocalPSRepoVersion -ge $GalleryVersion)) {
+        $NewVersion = New-Object -TypeName System.Version ($LocalPSRepoVersion.Major, $LocalPSRepoVersion.Minor, ($LocalPSRepoVersion.Build + 1))
+    } elseif(($GalleryVersion -ge $GitHubVersion) -and ($GalleryVersion -ge $AzureDevOpsVersion)) {
         $NewVersion = New-Object System.Version ($GalleryVersion.Major, $GalleryVersion.Minor, ($GalleryVersion.Build + 1))
     } elseif($GitHubVersion -ge $AzureDevOpsVersion) {
         $NewVersion = New-Object System.Version ($GitHubVersion.Major, $GitHubVersion.Minor, $GitHubVersion.Build)
@@ -149,8 +168,11 @@ Task Build -Depends Test {
 
     Update-Metadata -Path $env:BHPSModuleManifest -PropertyName "ModuleVersion" -Value $NewVersion -ErrorAction Stop
 
-    Register-PSRepository -Name "LocalPSRepo" -SourceLocation "$env:BUILD_SOURCESDIRECTORY\BuildOutput" -PublishLocation "$env:BUILD_SOURCESDIRECTORY\BuildOutput" -InstallationPolicy Trusted
-    nuget.exe sources Add -Name "LocalPSRepo" -Source "$env:BUILD_SOURCESDIRECTORY\BuildOutput"
+    if(-not (Test-Path -Path "$BuildDir")) {
+        New-Item -Path "$BuildDir" -ItemType Directory -Force
+    }
 
-    Publish-Module -Path $env:BHModulePath -Repository "LocalPSRepo" -NuGetApiKey "AzureDevOps" -Verbose
+    Publish-Module -Path $env:BHModulePath -Repository "LocalPSRepo" -NuGetApiKey "AzureDevOps" -Force -Verbose
+
+    $Lines
 }

@@ -1,8 +1,6 @@
-ARG TAG=ltsc2019
-FROM mcr.microsoft.com/windows/servercore:$TAG
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
-WORKDIR /pester
+RUN mkdir /pester
+RUN mkdir /TestOutput
 
 ADD . /pester
-
-CMD powershell.exe .\Build\build.ps1
