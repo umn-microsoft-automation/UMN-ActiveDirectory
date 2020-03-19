@@ -31,9 +31,9 @@
 function Confirm-ADObjectDCReplication {
 	[CmdletBinding()]
 	param(
-		[Parameter(Mandatory=$true)][string]$ADObject,
-		[Parameter(Mandatory=$true)][ValidateSet("Computer", "User", "Group", "OU", "Unknown")][string]$Type,
-		[Parameter(Mandatory=$false)][int]$MaxWait=30
+		[Parameter(Mandatory = $true)][string]$ADObject,
+		[Parameter(Mandatory = $true)][ValidateSet("Computer", "User", "Group", "OU", "Unknown")][string]$Type,
+		[Parameter(Mandatory = $false)][int]$MaxWait = 30
 	)
 
 	$DomainControllers = New-Object System.Collections.ArrayList
@@ -45,15 +45,20 @@ function Confirm-ADObjectDCReplication {
 		# Get the list of domain controllers to check
 		$null = Get-ADDomainController -Filter * | Foreach-Object { $DomainControllers.Add($_.HostName) }
 
-		while(($Count -le $MaxWait) -and ($DomainControllers)) {
+		while (($Count -le $MaxWait) -and ($DomainControllers)) {
 			# Walk through each DC and identify the DC's that see the AD object
-			foreach($DomainController in $DomainControllers) {
-				if(Confirm-ADObjectExists -Identity $ADObject -Server $DomainController -Type $Type) {
-					$null = $GoodServers.Add($DomainController)
+			foreach ($DomainController in $DomainControllers) {
+				try {
+					if (Confirm-ADObjectExists -Identity $ADObject -Server $DomainController -Type $Type -ErrorAction SilentlyContinue) {
+						$null = $GoodServers.Add($DomainController)
+					}
+				}
+				catch {
+					# Do nothing
 				}
 			}
 
-			foreach($DomainController in $GoodServers) {
+			foreach ($DomainController in $GoodServers) {
 				$null = $DomainControllers.Remove($DomainController)
 			}
 
@@ -62,12 +67,14 @@ function Confirm-ADObjectDCReplication {
 			$Count++
 		}
 
-		if(-not ($DomainControllers)) {
+		if (-not ($DomainControllers)) {
 			return $true
-		} else {
+		}
+		else {
 			return $false
 		}
-	} catch {
+	}
+ catch {
 		throw $_
 	}
 }
